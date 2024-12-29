@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Stonks
+{% endblock %}
+
+{% block main %}
+
+<div class="mb-3">
+    Your stonks:
+</div>
+<table class="table table-striped table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>Symbol</th>
+            <th>Price</th>
+            <th>Shares</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for wallet in wallets %}
+            <tr>
+                <td>{{ wallet.symbol }}</td>
+                <td>{{ wallet.price }}</td>
+                <td>{{ wallet.shares }}</td>
+                <td>{{ wallet.value }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="mb-3">
+    Your cash: {{ cash }}
+</div>
+<div class="mb-3">
+    Total: {{ total }}
+</div>
+
+{% endblock %}
