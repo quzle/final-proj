@@ -1,0 +1,34 @@
+{% extends "index.html" %}
+
+{% block title %}
+    Weather
+{% endblock %}
+
+{% block main %}
+
+<div class="mb-3">
+    Your locations:
+</div>
+<table class="table table-striped table-bordered table-hover">
+    <thead class="thead-dark">
+        <tr>
+            <th>Location</th>
+            <th>Temperature</th>
+            <th>Precipitation</th>
+            <th>Wind</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ location["name"] }}</td>
+            <td>{{ weather["temp_c"] }}</td>
+            <td>{{ weather["precip_mm"] }}</td>
+            <td>{{ weather["wind_kph"] }}</td>
+        </tr>
+    </tbody>
+</table>
+<div class="mb-3">
+    Your best bet:
+</div>
+
+{% endblock %}

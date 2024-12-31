@@ -45,13 +45,12 @@ def index():
 
         location = request.form.get("location")
         session.search_loc = lookup_location(location)
-        return redirect("/")
+
+        weather = search_weather(session.search_loc["id"])
+        
+        return render_template("weather.html", location=session.search_loc, weather=weather)
     
     else:
-        try:
-            session.weather = search_weather(session.search_loc["id"])
-        except AttributeError:
-            return render_template("index.html")
         return render_template("index.html")
 
 

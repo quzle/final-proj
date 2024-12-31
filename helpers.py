@@ -3,7 +3,6 @@ import requests
 from flask import redirect, render_template, session, current_app
 from functools import wraps
 
-
 def apology(message, code=400):
     """Render message as an apology to user."""
 
@@ -47,7 +46,7 @@ def login_required(f):
 
 def lookup_location(location):
     """Look up location."""
-    api_url = current_app.config["API_URL"]
+    api_url = current_app.config["API_base_URL"]
     api_key = current_app.config["API_KEY"]
 
     url = f"{api_url}/search.json?key={api_key}&q={location}"
@@ -75,7 +74,7 @@ def lookup_location(location):
 
 def search_weather(id):
     """Look up weather for id returned by search."""
-    api_url = current_app.config["API_URL"]
+    api_url = current_app.config["API_base_URL"]
     api_key = current_app.config["API_KEY"]
 
     url = f"{api_url}/current.json?key={api_key}&q=id:{id}"
@@ -93,7 +92,7 @@ def search_weather(id):
             "temp_c": response_data["current"]["temp_c"],
             "wind_kph": response_data["current"]["wind_kph"],
             "cloud": response_data["current"]["cloud"],
-
+            "precip_mm": response_data["current"]["precip_mm"],
         }
     
     except requests.RequestException as e:
