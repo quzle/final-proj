@@ -17,9 +17,12 @@ app.jinja_env.filters["usd"] = usd
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+
+Session(app)
+
+# Define global constants
 app.config["API_base_URL"] = "http://api.weatherapi.com/v1"
 app.config["API_KEY"] = "f87bbf78616941c0bd2174335242912"
-Session(app)
 
 # Configure CS50 Library to use SQLite database
 db = SQL("sqlite:///locations.db")
@@ -48,7 +51,7 @@ def index():
         try:
             session.weather = search_weather(session.search_loc["id"])
         except AttributeError:
-            return None
+            return render_template("index.html")
         return render_template("index.html")
 
 
@@ -89,7 +92,6 @@ def login():
     # User reached route via GET (as by clicking a link or via redirect)
     else:
         return render_template("login.html")
-
 
 @app.route("/logout")
 def logout():

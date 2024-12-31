@@ -46,7 +46,7 @@ def login_required(f):
 
 
 def lookup_location(location):
-    """Look up quote for symbol."""
+    """Look up location."""
     api_url = current_app.config["API_URL"]
     api_key = current_app.config["API_KEY"]
 
@@ -68,13 +68,10 @@ def lookup_location(location):
             "name": response_data[0]["name"],
             "country": response_data[0]["country"],
         }
-    
-
     except requests.RequestException as e:
-        print(f"Request error: {e}")
-    except (KeyError, ValueError) as e:
-        print(f"Data parsing error: {e}")
-    return None
+        print(f"Error fetching location data: {e}")
+        return None
+
 
 def search_weather(id):
     """Look up weather for id returned by search."""
