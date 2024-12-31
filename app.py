@@ -35,20 +35,8 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    wallets = db.execute("SELECT * FROM wallets WHERE user_id = ?", session.get("user_id"))
-    cash = db.execute("SELECT cash FROM users WHERE id = ?", session.get("user_id"))
-    total = 0
-    for wallet in wallets:
-
-        wallet["price"] = int(lookup(wallet["symbol"])["price"])
-        total += int(wallet["price"]) * int(wallet["shares"])
-
-        wallet["value"] = usd(wallet["price"] * wallet["shares"])
-        wallet["price"] = usd(wallet["price"])
-        wallet["symbol"] = lookup(wallet["symbol"])["symbol"]
-
-    total = total + int(cash[0]["cash"]);
-    return render_template("index.html", wallets=wallets, cash=usd(cash[0]["cash"]), total=usd(total))
+    
+    return render_template("index.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
