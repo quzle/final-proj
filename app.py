@@ -6,7 +6,7 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup_location, search_weather, usd
 
 # Configure application
 app = Flask(__name__)
@@ -17,10 +17,12 @@ app.jinja_env.filters["usd"] = usd
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["API_base_URL"] = "http://api.weatherapi.com/v1"
+app.config["API_KEY"] = "f87bbf78616941c0bd2174335242912"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
+db = SQL("sqlite:///locations.db")
 
 
 @app.after_request
@@ -32,7 +34,7 @@ def after_request(response):
     return response
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 @login_required
 def index():
 
@@ -42,24 +44,15 @@ def index():
 
         location = request.form.get("location")
 
-        if location == "zermatt":
-            best_location = "zermatt"
-        elif location == "grindelwald":
-            best_location = "grindelwald"
-        elif location == "engelberg":
-            best_location = "engelberg"
-        elif location == "davos":
-            best_location = "davos"
-        elif location == "st_moritz":
-            best_location = "st_moritz"
-        elif location == "verbier":
-            best_location = "verbier"
-        else:
-            best_location = "zermatt"
+        session.search_loc = lookup_location(location)
         
         return redirect("/")
     
-    return render_template("index.html", best_location)
+    if session.search_loc:
+
+        session.weather = search_weather(session.search_loc["id"])
+
+    return render_template()
 
 
 @app.route("/login", methods=["GET", "POST"])
