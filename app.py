@@ -35,24 +35,21 @@ def after_request(response):
 
 
 @app.route("/", methods=["GET", "POST"])
-@login_required
 def index():
-
     if request.method == "POST":
         if not request.form.get("location"):
             return apology("must provide location", 400)
 
         location = request.form.get("location")
-
         session.search_loc = lookup_location(location)
-        
         return redirect("/")
     
-    if session.search_loc:
-
-        session.weather = search_weather(session.search_loc["id"])
-
-    return render_template()
+    else:
+        try:
+            session.weather = search_weather(session.search_loc["id"])
+        except AttributeError:
+            return None
+        return render_template("index.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
