@@ -40,15 +40,12 @@ def after_request(response):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        if not request.form.get("location"):
+        if not request.form.get("id"):
             return apology("must provide location", 400)
+                
+        location = search_weather(request.form.get("id"))
 
-        location = request.form.get("location")
-        session.search_loc = lookup_location(location)
-
-        weather = search_weather(session.search_loc["id"])
-        
-        return render_template("weather.html", location=session.search_loc, weather=weather)
+        return render_template("weather.html", location=location)
     
     else:
         return render_template("index.html")

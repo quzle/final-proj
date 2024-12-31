@@ -20,10 +20,10 @@
     </thead>
     <tbody>
         <tr>
-            <td>{{ location["name"] }}</td>
-            <td>{{ weather["temp_c"] }}</td>
-            <td>{{ weather["precip_mm"] }}</td>
-            <td>{{ weather["wind_kph"] }}</td>
+            <td>{{ location["location"]["name"] }}</td>
+            <td>{{ location["current"]["temp_c"] }}</td>
+            <td>{{ location["current"]["precip_mm"] }}</td>
+            <td>{{ location["current"]["wind_kph"] }}</td>
         </tr>
     </tbody>
 </table>

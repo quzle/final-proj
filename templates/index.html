@@ -10,12 +10,66 @@
     <h1>
         Add location
     </h1>
-    <form method="post" class="d-flex justify-content-center mt-4">
+    <form method="post" class="d-flex justify-content-center mt-4" id="location-form">
         <div class="form-group d-flex align-items-center" style="min-width: 300px; width: 30%;">
-            <input class="form-control mr-2" name="location" placeholder="Location" type="text">
+            <input class="form-control mr-2" id="location-input" name="location" placeholder="Location" type="text" autocomplete="off">
             <button type="submit" class="btn btn-primary mx-2">Submit</button>
         </div>
+        <input type="hidden" id="location-id" name="location_id">
     </form>
+    <ul id="results" class="list-group mt-2" style="position: absolute; z-index: 1000; width: 30%;"></ul>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const input = document.getElementById("location-input");
+    const results = document.getElementById("results");
+    const form = document.getElementById("location-form");
+    const locationIdInput = document.getElementById("location-id");
+
+    input.addEventListener("input", function() {
+        const query = input.value;
+        if (query.length < 3) {
+            results.innerHTML = "";
+            return;
+        }
+
+        fetch(`http://api.weatherapi.com/v1/search.json?key=f87bbf78616941c0bd2174335242912&q=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                results.innerHTML = "";
+                data.forEach(item => {
+                    const li = document.createElement("li");
+                    li.classList.add("list-group-item");
+                    li.textContent = `${item.name}, ${item.country}`;
+                    li.dataset.id = item.id;
+                    li.addEventListener("click", function() {
+                        input.value = li.textContent;
+                        locationIdInput.value = li.dataset.id;
+                        results.innerHTML = "";
+                    });
+                    results.appendChild(li);
+                });
+            });
+    });
+
+    input.addEventListener("keydown", function(event) {
+        if (event.key === "Enter" && results.firstChild) {
+            event.preventDefault();
+            const firstResult = results.firstChild;
+            input.value = firstResult.textContent;
+            locationIdInput.value = firstResult.dataset.id;
+            results.innerHTML = "";
+            form.submit();
+        }
+    });
+
+    document.addEventListener("click", function(event) {
+        if (!results.contains(event.target) && event.target !== input) {
+            results.innerHTML = "";
+        }
+    });
+});
+</script>
 
 {% endblock %}
