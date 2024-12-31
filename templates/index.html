@@ -7,15 +7,27 @@
 {% block main %}
 
 <div class="mb-3">
+    <h1>
+        Add location
+    </h1>
+    <form>
+        <div class="form-group">
+            <input class="form-control" name="location" placeholder="Location" type="text">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </form>
+</div>
+
+<div class="mb-3">
     Your locations:
 </div>
 <table class="table table-striped table-bordered table-hover">
     <thead class="thead-dark">
         <tr>
-            <th>Symbol</th>
-            <th>Price</th>
-            <th>Shares</th>
-            <th>Value</th>
+            <th>Location</th>
+            <th>Temperature</th>
+            <th>Precipitation</th>
+            <th>Wind</th>
         </tr>
     </thead>
     <tbody>
@@ -23,10 +35,7 @@
     </tbody>
 </table>
 <div class="mb-3">
-    Your cash: {{ cash }}
-</div>
-<div class="mb-3">
-    Total: {{ total }}
+    Your best bet: {{ best_location }}
 </div>
 
 {% endblock %}

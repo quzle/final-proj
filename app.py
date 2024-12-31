@@ -35,8 +35,31 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
+
+    if request.method == "POST":
+        if not request.form.get("location"):
+            return apology("must provide location", 400)
+
+        location = request.form.get("location")
+
+        if location == "zermatt":
+            best_location = "zermatt"
+        elif location == "grindelwald":
+            best_location = "grindelwald"
+        elif location == "engelberg":
+            best_location = "engelberg"
+        elif location == "davos":
+            best_location = "davos"
+        elif location == "st_moritz":
+            best_location = "st_moritz"
+        elif location == "verbier":
+            best_location = "verbier"
+        else:
+            best_location = "zermatt"
+        
+        return redirect("/")
     
-    return render_template("index.html")
+    return render_template("index.html", best_location)
 
 
 @app.route("/login", methods=["GET", "POST"])
