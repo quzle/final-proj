@@ -6,13 +6,10 @@ from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 
-from helpers import apology, login_required, lookup_location, search_weather, usd
+from helpers import apology, login_required, lookup_location, search_weather, search_forecast, process_weather_data
 
 # Configure application
 app = Flask(__name__)
-
-# Custom filter
-app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -23,10 +20,11 @@ Session(app)
 # Define global constants
 app.config["API_base_URL"] = "http://api.weatherapi.com/v1"
 app.config["API_KEY"] = "f87bbf78616941c0bd2174335242912"
+app.config["debug"] = True
+app.config["MAX_LOCATIONS"] = 4
 
 # Configure CS50 Library to use SQLite database
 db = SQL("sqlite:///locations.db")
-
 
 @app.after_request
 def after_request(response):
@@ -38,17 +36,120 @@ def after_request(response):
 
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     if request.method == "POST":
-        if not request.form.get("id"):
+        location_id = request.form.get("location_id")
+                
+        if app.config["debug"]:
+            print(f"/nLocation ID: {location_id}\n")  # Debug print
+
+        if not location_id:
             return apology("must provide location", 400)
                 
-        location = search_weather(request.form.get("id"))
+        results = search_weather(location_id)
+        
+        if app.config["debug"]:
+            print(f"/nResults: {results}\n")  # Debug print
+        
+        if results is None:
+            return apology("invalid location", 400)
+        
+        if 'location' not in results:
+            return apology("location key not found in results", 400)
+        
+        location = results['location']
+        location["id"] = location_id
 
-        return render_template("weather.html", location=location)
+        if app.config["debug"]:
+            print(f"\nLocation: {location}\n")  # Debug print
+
+        if db.execute("SELECT * FROM locations WHERE id = ?", location["id"]):
+            db.execute(
+                "UPDATE locations SET name = :name, country = :country, lat = :lat, lon = :lon, last_used = :time WHERE id = :id",
+                name=location['name'], country=location['country'], lat=location['lat'], lon=location['lon'], id=location['id'], time=datetime.now()
+            )
+
+        else:
+            db.execute(
+                "INSERT INTO locations (id, name, country, lat, lon, last_used) VALUES (:id, :name, :country, :lat, :lon, :time)",
+                id=location['id'], name=location['name'], country=location['country'], lat=location['lat'], lon=location['lon'], time=datetime.now()
+            )
+
+        # Check max location count and add into user_locations
+        user_id = session.get("user_id")
+
+        locations = db.execute("SELECT * FROM locations where id IN (SELECT location_id FROM user_locations WHERE user_id = ?)", user_id) or []
+
+        if app.config["debug"]:
+            print(f"\nThe following {len(locations)} locations were found in database:\n{locations}\n")  # Debug print
+
+        if len(locations) > app.config["MAX_LOCATIONS"]:
+            return apology("maximum location count reached", 400)
+        
+        else:
+            db.execute(
+                "INSERT INTO user_locations (user_id, location_id) VALUES (?, ?)",
+                user_id, location['id']
+            )
+        
+        return redirect("/")
     
     else:
-        return render_template("index.html")
+        user_id = session.get("user_id")
+        
+        locations = db.execute("SELECT * FROM locations where id IN (SELECT location_id FROM user_locations WHERE user_id = ?)", user_id)
+
+        weather = []
+
+        for loc in locations:
+            weather_data = search_weather(loc["id"])
+            if weather_data is not None:
+                weather.append(weather_data)
+                weather[-1]["location"]["id"] = loc["id"]
+
+        return render_template("weather.html", weather=weather)
+
+@app.route("/delete", methods=["POST"])
+@login_required
+def delete():
+    location_id = request.form.get("location_id")
+
+    if not location_id:
+        return apology("must provide location", 400)
+
+    user_id = session.get("user_id")
+
+    db.execute(
+        "DELETE FROM user_locations WHERE user_id = ? AND location_id = ?",
+        user_id, location_id
+    )
+
+    return redirect("/")
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    user_id = session.get("user_id")
+
+    locations = db.execute("SELECT * FROM locations where id IN (SELECT location_id FROM user_locations WHERE user_id = ?)", user_id)
+
+    if len(locations) == 0:
+        locations = []
+        forecast = {}
+    else:
+
+        forecast = {}
+        processed = []
+
+        for location in locations:
+            forecast = search_forecast(location["id"])
+            processed.append(process_weather_data(forecast['forecast']['forecastday']))
+    
+    if app.config["debug"]:
+        print(f"\nProcessed data:\n")
+
+    return render_template("dashboard.html", locationCount=len(locations), locations=locations, processed=processed)
 
 
 @app.route("/login", methods=["GET", "POST"])

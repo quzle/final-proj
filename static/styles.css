@@ -21,3 +21,46 @@ nav .navbar-brand .green
 {
     color: #2e944b;
 }
+
+/* Content for dashboard.html below */
+
+.weather-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    text-align: center;
+  }
+
+  .weather-block i {
+    font-size: 48px;
+    color: #007bff;
+  }
+
+  .traffic-light {
+    margin-top: 15px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+
+  .traffic-light.green {
+    background-color: #28a745;
+  }
+
+  .traffic-light.yellow {
+    background-color: #ffc107;
+  }
+
+  .traffic-light.red {
+    background-color: #dc3545;
+  }
+
+  .toggle-btn {
+    min-width: 120px;
+    text-transform: capitalize;
+  }

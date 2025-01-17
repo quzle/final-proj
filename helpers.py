@@ -2,6 +2,8 @@ import requests
 
 from flask import redirect, render_template, session, current_app
 from functools import wraps
+from datetime import datetime
+import json
 
 def apology(message, code=400):
     """Render message as an apology to user."""
@@ -73,7 +75,7 @@ def lookup_location(location):
 
 
 def search_weather(id):
-    """Look up weather for id returned by search."""
+    """Look up weather for location id."""
     api_url = current_app.config["API_base_URL"]
     api_key = current_app.config["API_KEY"]
 
@@ -85,15 +87,10 @@ def search_weather(id):
         
         response_data = response.json()
 
-        print("Weather response data:")
-        print(response_data)
+        if current_app.config["debug"]:
+            print("Retrieved today's weather")
 
-        return {
-            "temp_c": response_data["current"]["temp_c"],
-            "wind_kph": response_data["current"]["wind_kph"],
-            "cloud": response_data["current"]["cloud"],
-            "precip_mm": response_data["current"]["precip_mm"],
-        }
+        return response_data
     
     except requests.RequestException as e:
         print(f"Request error: {e}")
@@ -101,6 +98,123 @@ def search_weather(id):
         print(f"Data parsing error: {e}")
     return None
 
-def usd(value):
-    """Format value as USD."""
-    return f"${value:,.2f}"
+def search_forecast(id):
+    """Look up 3 day forecast for location id."""
+    api_url = current_app.config["API_base_URL"]
+    api_key = current_app.config["API_KEY"]
+
+    url = f"{api_url}/forecast.json?key={api_key}&q=id:{id}&days=3"
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for HTTP error responses
+        
+        response_data = response.json()
+
+        if current_app.config["debug"]:
+            print("Retrieved weather forecast")
+
+        return response_data
+    
+    except requests.RequestException as e:
+        print(f"Request error: {e}")
+    except (KeyError, ValueError) as e:
+        print(f"Data parsing error: {e}")
+    return None
+
+def process_weather_data(forecast_days):
+    
+    processed_data = []
+    today = datetime.now()
+
+    for day in forecast_days:
+        date = day['date']
+        day_date = datetime.strptime(date, "%Y-%m-%d")
+        days_from_now = (day_date - today).days
+
+        best_precip_time = None
+        highest_precip_chance = 0
+        precip_type = "none"
+        icon = day['day']['condition']['icon']
+
+        # Filter hours between 8 AM and 5 PM
+        daytime_hours = [hour for hour in day['hour'] if 8 <= int(hour['time'].split()[1].split(':')[0]) <= 17]
+
+        if not daytime_hours:
+            continue  # Skip if no valid hours are found
+
+        # Analyze hourly data for precipitation
+        for hour in daytime_hours:
+            if hour['chance_of_rain'] > highest_precip_chance:
+                highest_precip_chance = hour['chance_of_rain']
+                best_precip_time = hour['time']
+                precip_type = "rain"
+            if hour['chance_of_snow'] > highest_precip_chance:
+                highest_precip_chance = hour['chance_of_snow']
+                best_precip_time = hour['time']
+                precip_type = "snow"
+
+        # Categorize wind and calculate kph and direction
+        avg_wind_mph = sum(hour['wind_mph'] for hour in daytime_hours) / len(daytime_hours)
+        avg_wind_kph = avg_wind_mph * 1.60934  # Convert mph to kph
+        avg_wind_dir = sum(hour['wind_degree'] for hour in daytime_hours) / len(daytime_hours)
+
+        if avg_wind_mph <= 5:
+            wind_category = "absent"
+        elif avg_wind_mph <= 15:
+            wind_category = "mild"
+        elif avg_wind_mph <= 25:
+            wind_category = "strong"
+        else:
+            wind_category = "very strong"
+
+        # Calculate ski score
+        avg_temp_c = sum(hour['temp_c'] for hour in daytime_hours) / len(daytime_hours)
+        min_temp_c = min(hour['temp_c'] for hour in daytime_hours)
+        max_temp_c = max(hour['temp_c'] for hour in daytime_hours)
+        snowfall_cm = day['day'].get('totalsnow_cm', 0)
+        ski_score = 10
+
+        if avg_temp_c < -10 or avg_temp_c > 5:  # Too cold or warm
+            ski_score -= 3
+        if snowfall_cm < 5 or snowfall_cm > 50:  # Not enough or too much snow
+            ski_score -= 3
+        if wind_category in ["strong", "very strong"]:  # Penalize for high winds
+            ski_score -= 2
+        if precip_type == "rain":  # Penalize rain
+            ski_score -= 2
+
+        # Ensure score is between 1 and 10
+        ski_score = max(1, min(10, ski_score))
+
+        # Determine if the day is primarily sunny or cloudy
+        condition_text = day['day']['condition']['text'].lower()
+        if "sunny" in condition_text or "clear" in condition_text:
+            daytime_sun_or_cloudy = "sunny"
+        else:
+            daytime_sun_or_cloudy = "cloudy"
+
+        # Add processed data for the day
+        processed_data.append({
+            "date": date,
+            "days_from_now": days_from_now,
+            "icon": icon,
+            "precipitation": {
+                "time": best_precip_time,
+                "type": precip_type,
+                "chance": highest_precip_chance
+            },
+            "wind": {
+                "category": wind_category,
+                "speed_kph": avg_wind_kph,
+                "direction": avg_wind_dir
+            },
+            "temperature": {
+                "min": min_temp_c,
+                "max": max_temp_c
+            },
+            "daytime_sun_or_cloudy": daytime_sun_or_cloudy,
+            "ski_score": ski_score
+        })
+
+    return processed_data

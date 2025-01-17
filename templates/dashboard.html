@@ -1,0 +1,157 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Dashboard
+{% endblock %}
+
+{% block main %}
+
+<body class="bg-light">
+
+  <div class="container my-4">
+    <!-- Toggle -->
+    <div class="d-flex justify-content-end mb-3">
+        <div class="align-self-center" id="currentMode">Current mode: climbing</div>
+        <button id="toggleButton" class="btn btn-primary toggle-btn mx-3">Switch to skiing</button>
+    </div>
+
+    <!-- Weather Blocks -->
+    <div class="row g-3">
+
+    {% for i in range(locationCount) %}
+      <div class="col-lg-3 col-md-6 col-12">
+        <div class="weather-block">
+
+          <img src={{ processed[i][0]['icon'] }} alt="weather icon" width="50" height="50">
+          <p class="mb-1"><strong>{{ locations[i]['name'] }}</strong></p>
+          <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[i][0]['date'] }}</p>
+          <p class="mb-1"><strong>Rain:</strong> {{ processed[i][0]['precipitation']['chance'] }}%</p>
+          <p class="mb-1"><strong>Wind:</strong> {{ processed[i][0]['wind']['category'] }}</p>
+          <p class="mb-1"><strong>Min temperature:</strong> {{ processed[i][0]['temperature']['min'] }}°C</p>
+          <p class="mb-1"><strong>Max temperature:</strong> {{ processed[i][0]['temperature']['max'] }}°C</p>
+
+            <div class="px-1 pt-1 align-content-center" style="
+            {% if processed[i][0]['ski_score'] <= 3 %}
+              background-color: #eb4034;
+            {% elif processed[i][0]['ski_score'] <= 7 %}
+              background-color: #ff9a03;
+            {% else %}
+              background-color: #4caf50;
+            {% endif %}">
+              <p >
+            Ski score: {{ processed[i][0]['ski_score'] }}</p>
+            </div>
+        </div>
+      </div>
+    {% endfor %}
+    
+    </div>
+
+
+    <!--
+    <div class="row g-3">
+      <div class="col-lg-3 col-md-6 col-12">
+      <div class="weather-block">
+      {% if locationCount > 0 %}
+        <i class="bi bi-cloud-sun"></i>
+        <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[0][0]['date'] }}</p>
+        <p class="mb-1"><strong>Location:</strong> {{ locations[0]['name'] }}</p>
+        <p class="mb-1"><strong>Rain:</strong> {{ processed[0][0]['precipitation']['chance'] }}%</p>
+        <p class="mb-1"><strong>Wind:</strong> {{ processed[0][0]['wind']['category'] }}</p>
+        <p class="mb-1"><strong>Temperature:</strong> {{ processed[0][0]['temperature']['current'] }}°C</p>
+        <p class="mb-1"><strong>Humidity:</strong> {{ processed[0][0]['humidity'] }}%</p>
+        <div class="traffic-light {% if processed[0][0]['ski_score'] <= 3 %}red{% elif processed[0][0]['ski_score'] <= 7 %}yellow{% else %}green{% endif %}"></div>
+      {% else %}
+        <form action="/"></form>
+        <input type="submit" class="btn btn-secondary" value="Add a location" />
+        </form>
+      {% endif %}
+      </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-12">
+      <div class="weather-block">
+      {% if locationCount > 1 %}
+        <i class="bi bi-cloud-sun"></i>
+        <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[1][0]['date'] }}</p>
+        <p class="mb-1"><strong>Location:</strong> {{ locations[1]['name'] }}</p>
+        <p class="mb-1"><strong>Rain:</strong> {{ processed[1][0]['precipitation']['chance'] }}%</p>
+        <p class="mb-1"><strong>Wind:</strong> {{ processed[1][0]['wind']['category'] }}</p>
+        <p class="mb-1"><strong>Temperature:</strong> {{ processed[1][0]['temperature']['current'] }}°C</p>
+        <p class="mb-1"><strong>Humidity:</strong> {{ processed[1][0]['humidity'] }}%</p>
+        <div class="traffic-light 
+        {% if processed[1][0]['ski_score'] <= 3 %}
+        red
+        {% elif processed[1][0]['ski_score'] <= 7 %}
+        yellow
+        {% else %}
+        green
+        {% endif %}"></div>
+      {% else %}
+        <form action="/">
+        <input type="submit" class="btn btn-secondary" value="Add a location" />
+        </form>
+      {% endif %}
+      </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-12">
+      <div class="weather-block">
+      {% if locationCount > 2 %}
+        <i class="bi bi-cloud-sun"></i>
+        <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[2][0]['date'] }}</p>
+        <p class="mb-1"><strong>Location:</strong> {{ locations[2]['name'] }}</p>
+        <p class="mb-1"><strong>Rain:</strong> {{ processed[2][0]['precipitation']['chance'] }}%</p>
+        <p class="mb-1"><strong>Wind:</strong> {{ processed[2][0]['wind']['category'] }}</p>
+        <p class="mb-1"><strong>Temperature:</strong> {{ processed[2][0]['temperature']['current'] }}°C</p>
+        <p class="mb-1"><strong>Humidity:</strong> {{ processed[2][0]['humidity'] }}%</p>
+        <div class="traffic-light {% if processed[2][0]['ski_score'] <= 3 %}red{% elif processed[2][0]['ski_score'] <= 7 %}yellow{% else %}green{% endif %}"></div>
+      {% else %}
+        <form action="/">
+        <input type="submit" class="btn btn-secondary" value="Add a location" />
+        </form>
+      {% endif %}
+      </div>
+      </div>
+      <div class="col-lg-3 col-md-6 col-12">
+      <div class="weather-block">
+      {% if locationCount > 3 %}
+        <i class="bi bi-cloud-sun"></i>
+        <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[3][0]['date'] }}</p>
+        <p class="mb-1"><strong>Location:</strong> {{ locations[3]['name'] }}</p>
+        <p class="mb-1"><strong>Rain:</strong> {{ processed[3][0]['precipitation']['chance'] }}%</p>
+        <p class="mb-1"><strong>Wind:</strong> {{ processed[3][0]['wind']['category'] }}</p>
+        <p class="mb-1"><strong>Temperature:</strong> {{ processed[3][0]['temperature']['current'] }}°C</p>
+        <p class="mb-1"><strong>Humidity:</strong> {{ processed[3][0]['humidity'] }}%</p>
+        <div class="traffic-light {% if processed[3][0]['ski_score'] <= 3 %}red{% elif processed[3][0]['ski_score'] <= 7 %}yellow{% else %}green{% endif %}"></div>
+      {% else %}
+        <form action="/">
+        <input type="submit" class="btn btn-secondary" value="Add a location" />
+        </form>
+      {% endif %}
+      </div>
+      </div>
+    </div>
+  </div>
+  -->
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // JavaScript to toggle between 'skiing' and 'climbing'
+    const toggleButton = document.getElementById('toggleButton');
+    const currentMode = document.getElementById('currentMode');
+
+    toggleButton.addEventListener('click', () => {
+        if (currentMode.textContent.trim().toLowerCase() === 'current mode: skiing') {
+            currentMode.textContent = 'Current mode: climbing';
+            toggleButton.textContent = 'Switch to skiing';
+
+
+        } else if (currentMode.textContent.trim().toLowerCase() === 'current mode: climbing') {
+            currentMode.textContent = 'Current mode: skiing';
+            toggleButton.textContent = 'Switch to climbing';
+      }
+    });
+  </script>
+</body>
+</html>
+
+{% endblock %}

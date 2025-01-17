@@ -1,4 +1,4 @@
-{% extends "index.html" %}
+{% extends "layout.html" %}
 
 {% block title %}
     Weather
@@ -7,28 +7,112 @@
 {% block main %}
 
 <div class="mb-3">
-    Your locations:
+    <h1>
+        Add location
+    </h1>
+    <form method="post" class="d-flex justify-content-center mt-4" id="location-form">
+        <div class="form-group d-flex align-items-center" style="min-width: 300px; width: 30%;">
+            <input class="form-control mr-2" id="location-input" name="location" placeholder="Location" type="text" autocomplete="off">
+            <button type="submit" class="btn btn-primary mx-2">Submit</button>
+        <input type="hidden" id="location-id" name="location_id">
+        </div>
+    </form>
+    <div class="d-flex justify-content-center mt-2">
+        <ul id="results" class="list-group" style="width: 30%;"></ul>
+    </div>
 </div>
-<table class="table table-striped table-bordered table-hover">
-    <thead class="thead-dark">
+
+<div class="mb-3">
+    Current weather:
+</div>
+<table class="table">
+    <thead>
         <tr>
             <th>Location</th>
-            <th>Temperature</th>
-            <th>Precipitation</th>
-            <th>Wind</th>
+            <th></th>
+            <th>Temperature (°C)</th>
+            <th>Precipitation (mm)</th>
+            <th>Wind (kph)</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>{{ location["location"]["name"] }}</td>
-            <td>{{ location["current"]["temp_c"] }}</td>
-            <td>{{ location["current"]["precip_mm"] }}</td>
-            <td>{{ location["current"]["wind_kph"] }}</td>
+        {% for loc in weather %}
+        <tr class="align-items-center">
+            <td>{{ loc["location"]["name"] }}</td>
+            <td><img src="http:{{ loc['current']['condition']['icon']}}" style="height: 50px;"></td>
+            <td>{{ loc["current"]["temp_c"] }}</td>
+            <td>{{ loc["current"]["precip_mm"] }}</td>
+            <td>{{ loc["current"]["wind_kph"] }}</td>
+            <td>
+                <form action="/delete" method="post" style="display:inline;">
+                    <input type="hidden" name="location_id" value="{{ loc['location']['id'] }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </td>
         </tr>
+        {% endfor %}
     </tbody>
 </table>
 <div class="mb-3">
     Your best bet:
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const input = document.getElementById("location-input");
+        const results = document.getElementById("results");
+        const form = document.getElementById("location-form");
+        const locationIdInput = document.getElementById("location-id");
+    
+        input.addEventListener("input", function() {
+            const query = input.value;
+            if (query.length < 3) {
+                results.innerHTML = "";
+                return;
+            }
+    
+            fetch(`http://api.weatherapi.com/v1/search.json?key=f87bbf78616941c0bd2174335242912&q=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log("API Response:", data); // Log the API response
+                    results.innerHTML = "";
+                    data.forEach(item => {
+                        console.log("Location Item:", item); // Log each location item
+                        const li = document.createElement("li");
+                        li.classList.add("list-group-item");
+                        li.textContent = `${item.name}, ${item.country}`;
+                        li.dataset.id = item.id;
+                        li.addEventListener("click", function() {
+                            input.value = li.textContent;
+                            locationIdInput.value = li.dataset.id;
+                            results.innerHTML = "";
+                        });
+                        results.appendChild(li);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching data:", error); // Log any errors
+                });
+        });
+    
+        input.addEventListener("keydown", function(event) {
+            if (event.key === "Enter" && results.firstChild) {
+                event.preventDefault();
+                const firstResult = results.firstChild;
+                input.value = firstResult.textContent;
+                locationIdInput.value = firstResult.dataset.id;
+                results.innerHTML = "";
+                form.submit();
+            }
+        });
+    
+        document.addEventListener("click", function(event) {
+            if (!results.contains(event.target) && event.target !== input) {
+                results.innerHTML = "";
+            }
+        });
+    });
+    </script>
 
 {% endblock %}
