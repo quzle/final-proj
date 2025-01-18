@@ -123,7 +123,6 @@ def search_forecast(id):
     return None
 
 def process_weather_data(forecast_days):
-    
     processed_data = []
     today = datetime.now()
 
@@ -131,11 +130,12 @@ def process_weather_data(forecast_days):
         date = day['date']
         day_date = datetime.strptime(date, "%Y-%m-%d")
         days_from_now = (day_date - today).days
+        icon = day['day']['condition']['icon']
 
         best_precip_time = None
         highest_precip_chance = 0
         precip_type = "none"
-        icon = day['day']['condition']['icon']
+        rain_chance = 0
 
         # Filter hours between 8 AM and 5 PM
         daytime_hours = [hour for hour in day['hour'] if 8 <= int(hour['time'].split()[1].split(':')[0]) <= 17]
@@ -149,6 +149,7 @@ def process_weather_data(forecast_days):
                 highest_precip_chance = hour['chance_of_rain']
                 best_precip_time = hour['time']
                 precip_type = "rain"
+                rain_chance = hour['chance_of_rain']
             if hour['chance_of_snow'] > highest_precip_chance:
                 highest_precip_chance = hour['chance_of_snow']
                 best_precip_time = hour['time']
@@ -173,15 +174,28 @@ def process_weather_data(forecast_days):
         min_temp_c = min(hour['temp_c'] for hour in daytime_hours)
         max_temp_c = max(hour['temp_c'] for hour in daytime_hours)
         snowfall_cm = day['day'].get('totalsnow_cm', 0)
+        avg_vis_km = sum(hour['vis_km'] for hour in daytime_hours) / len(daytime_hours)
         ski_score = 10
 
-        if avg_temp_c < -10 or avg_temp_c > 5:  # Too cold or warm
+        # Incremental temperature adjustment
+        if avg_temp_c > 5:
+            ski_score -= 0.5 * (avg_temp_c - 5)
+        elif avg_temp_c < -10:
+            ski_score -= 0.5 * abs(avg_temp_c + 10)
+
+        # Incremental rain penalty
+        ski_score -= 0.02 * rain_chance
+
+        # Visibility penalty
+        if avg_vis_km < 5:
+            ski_score -= (5 - avg_vis_km) * 0.4
+
+        # High snowfall penalty (not penalizing low snowfall)
+        if snowfall_cm > 50:
             ski_score -= 3
-        if snowfall_cm < 5 or snowfall_cm > 50:  # Not enough or too much snow
-            ski_score -= 3
-        if wind_category in ["strong", "very strong"]:  # Penalize for high winds
-            ski_score -= 2
-        if precip_type == "rain":  # Penalize rain
+
+        # Wind penalty
+        if wind_category in ["strong", "very strong"]:
             ski_score -= 2
 
         # Ensure score is between 1 and 10
@@ -198,11 +212,12 @@ def process_weather_data(forecast_days):
         processed_data.append({
             "date": date,
             "days_from_now": days_from_now,
-            "icon": icon,
+            "icon_url": icon,
             "precipitation": {
                 "time": best_precip_time,
                 "type": precip_type,
-                "chance": highest_precip_chance
+                "chance": highest_precip_chance,
+                "icon_url": day['day']['condition']['icon']
             },
             "wind": {
                 "category": wind_category,
@@ -213,6 +228,7 @@ def process_weather_data(forecast_days):
                 "min": min_temp_c,
                 "max": max_temp_c
             },
+            "visibility": avg_vis_km,
             "daytime_sun_or_cloudy": daytime_sun_or_cloudy,
             "ski_score": ski_score
         })

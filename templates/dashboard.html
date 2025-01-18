@@ -9,11 +9,6 @@
 <body class="bg-light">
 
   <div class="container my-4">
-    <!-- Toggle -->
-    <div class="d-flex justify-content-end mb-3">
-        <div class="align-self-center" id="currentMode">Current mode: climbing</div>
-        <button id="toggleButton" class="btn btn-primary toggle-btn mx-3">Switch to skiing</button>
-    </div>
 
     <!-- Weather Blocks -->
     <div class="row g-3">
@@ -22,7 +17,7 @@
       <div class="col-lg-3 col-md-6 col-12">
         <div class="weather-block">
 
-          <img src={{ processed[i][0]['icon'] }} alt="weather icon" width="50" height="50">
+          <img src={{ processed[i][0]['icon_url'] }} alt="weather icon" width="50" height="50">
           <p class="mb-1"><strong>{{ locations[i]['name'] }}</strong></p>
           <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[i][0]['date'] }}</p>
           <p class="mb-1"><strong>Rain:</strong> {{ processed[i][0]['precipitation']['chance'] }}%</p>
