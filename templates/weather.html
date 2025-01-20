@@ -52,11 +52,13 @@
             </td>
         </tr>
         {% endfor %}
+        {% if not weather %}
+        <tr>
+            <td colspan="6" class="text-center">No locations added</td>
+        </tr>
+        {% endif %}
     </tbody>
 </table>
-<div class="mb-3">
-    Your best bet:
-</div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {

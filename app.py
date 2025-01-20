@@ -50,7 +50,7 @@ def index():
         results = search_weather(location_id)
         
         if app.config["debug"]:
-            print(f"/nResults: {results}\n")  # Debug print
+            print(f"\nResults: {results}\n")  # Debug print
         
         if results is None:
             return apology("invalid location", 400)
@@ -64,16 +64,15 @@ def index():
         if app.config["debug"]:
             print(f"\nLocation: {location}\n")  # Debug print
 
-        if db.execute("SELECT * FROM locations WHERE id = ?", location["id"]):
-            db.execute(
-                "UPDATE locations SET name = :name, country = :country, lat = :lat, lon = :lon, last_used = :time WHERE id = :id",
-                name=location['name'], country=location['country'], lat=location['lat'], lon=location['lon'], id=location['id'], time=datetime.now()
-            )
-
-        else:
+        if not db.execute("SELECT * FROM locations WHERE id = ?", location["id"]):
             db.execute(
                 "INSERT INTO locations (id, name, country, lat, lon, last_used) VALUES (:id, :name, :country, :lat, :lon, :time)",
                 id=location['id'], name=location['name'], country=location['country'], lat=location['lat'], lon=location['lon'], time=datetime.now()
+            )
+        else:
+            db.execute(
+                "UPDATE locations SET name = :name, country = :country, lat = :lat, lon = :lon, last_used = :time WHERE id = :id",
+                name=location['name'], country=location['country'], lat=location['lat'], lon=location['lon'], id=location['id'], time=datetime.now()
             )
 
         # Check max location count and add into user_locations
@@ -88,10 +87,16 @@ def index():
             return apology("maximum location count reached", 400)
         
         else:
-            db.execute(
-                "INSERT INTO user_locations (user_id, location_id) VALUES (?, ?)",
+            existing_location = db.execute(
+                "SELECT * FROM user_locations WHERE user_id = ? AND location_id = ?",
                 user_id, location['id']
             )
+
+            if not existing_location:
+                db.execute(
+                    "INSERT INTO user_locations (user_id, location_id) VALUES (?, ?)",
+                    user_id, location['id']
+                )
         
         return redirect("/")
     
@@ -134,20 +139,21 @@ def dashboard():
 
     locations = db.execute("SELECT * FROM locations where id IN (SELECT location_id FROM user_locations WHERE user_id = ?)", user_id)
 
+    processed = []
+
     if len(locations) == 0:
         locations = []
         forecast = {}
     else:
 
         forecast = {}
-        processed = []
 
         for location in locations:
             forecast = search_forecast(location["id"])
             processed.append(process_weather_data(forecast['forecast']['forecastday']))
     
     if app.config["debug"]:
-        print(f"\nProcessed data:\n")
+        print(f"\nProcessed data:{processed}\n")
 
     return render_template("dashboard.html", locationCount=len(locations), locations=locations, processed=processed)
 

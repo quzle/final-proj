@@ -8,10 +8,22 @@
 
 <body class="bg-light">
 
-  <div class="container my-4">
+  <div class="container my-1">
+
+    <h1 class="mb-5">
+      Tomorrow's conditions:
+    </h1>
 
     <!-- Weather Blocks -->
-    <div class="row g-3">
+    <div class="row g-3 justify-content-center">
+
+    {% if locationCount == 0 %}
+      <div class="col-lg-3 col-md-6 col-12">
+        <div class="weather-block">
+          <a href="/">Add a location</a>
+        </div>
+      </div>
+    {% endif %}
 
     {% for i in range(locationCount) %}
       <div class="col-lg-3 col-md-6 col-12">
@@ -20,7 +32,7 @@
           <img src={{ processed[i][0]['icon_url'] }} alt="weather icon" width="50" height="50">
           <p class="mb-1"><strong>{{ locations[i]['name'] }}</strong></p>
           <p class="mt-2 mb-1"><strong>Date:</strong> {{ processed[i][0]['date'] }}</p>
-          <p class="mb-1"><strong>Rain:</strong> {{ processed[i][0]['precipitation']['chance'] }}%</p>
+          <p class="mb-1"><strong>Precipitation:</strong> {{ processed[i][0]['precipitation']['chance'] }}%, {{processed[i][0]['precipitation']['type']}}</p>
           <p class="mb-1"><strong>Wind:</strong> {{ processed[i][0]['wind']['category'] }}</p>
           <p class="mb-1"><strong>Min temperature:</strong> {{ processed[i][0]['temperature']['min'] }}°C</p>
           <p class="mb-1"><strong>Max temperature:</strong> {{ processed[i][0]['temperature']['max'] }}°C</p>
@@ -34,7 +46,7 @@
               background-color: #4caf50;
             {% endif %}">
               <p >
-            Ski score: {{ processed[i][0]['ski_score'] }}</p>
+            Skiability score: {{ "%.2f"|format(processed[i][0]['ski_score']) }}</p>
             </div>
         </div>
       </div>
